@@ -1,6 +1,5 @@
 const PdfPrinter = require("pdfmake");
 const { parseStringPromise } = require("xml2js");
-const { construirCabecera } = require("./plantillaCabeceraXML");
 const fs = require("fs");
 const path = require("path");
 
@@ -71,14 +70,21 @@ const generarPDFdesdeXMLyDatos = async (xml, datos) => {
     const tabla = {
       table: {
         headerRows: 1,
-        widths: Array(columnas.length).fill("*"),
+        widths: columnas.map(() => "auto"), // ajuste automático
         body: [
           columnas.map((col) => ({
             text: col.toUpperCase(),
             bold: true,
             fillColor: "#eeeeee",
+            noWrap: false,
           })),
-          ...datos.map((row) => columnas.map((col) => String(row[col] || ""))),
+          ...datos.map((row) =>
+            columnas.map((col) => ({
+              text: String(row[col] || ""),
+              noWrap: false,
+              style: "tablaDatos",
+            }))
+          ),
         ],
       },
       layout: {
@@ -113,11 +119,15 @@ const generarPDFdesdeXMLyDatos = async (xml, datos) => {
         fontSize: 10,
         alignment: "left",
       },
+      tablaDatos: {
+        fontSize: 8, // tabla más compacta
+      },
     },
     defaultStyle: {
       font: "Roboto",
     },
     pageMargins: [40, 60, 40, 60],
+    pageOrientation: "landscape", // quita esta línea si lo quieres vertical
   };
 
   const pdfDoc = printer.createPdfKitDocument(docDefinition);
