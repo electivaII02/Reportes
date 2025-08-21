@@ -14,8 +14,11 @@ const generarCabeceraConReportePDF = async (req, res) => {
     const { id_proyecto, id_reporte } = req.params;
     const parametros = req.query; // parámetros del reporte (inicio, fin, etc.)
 
+    // ⚡️ Aquí id_proyecto es el código (b43, b32, etc.)
+    const codigoProyecto = id_proyecto;
+
     // 1. Obtener proyecto y su cabecera
-    const proyecto = await buscarProyectoPorCodigo(id_proyecto);
+    const proyecto = await buscarProyectoPorCodigo(codigoProyecto);
     if (!proyecto)
       return res.status(404).json({ error: "Proyecto no encontrado" });
 
@@ -58,13 +61,17 @@ const generarCabeceraConReportePDF = async (req, res) => {
       sql = sql.replace(placeholder, db.escape(valor));
     }
 
-    const fuente = await buscarProyectoPorCodigo(id_proyecto);
+    const fuente = await buscarProyectoPorCodigo(codigoProyecto);
     const conexion = await crearConexionDinamica(fuente);
     const [datosReporte] = await conexion.query(sql);
     await conexion.end();
 
-    // 4. Generar PDF combinando XML + datos
-    const pdfBuffer = await generarPDFdesdeXMLyDatos(xml, datosReporte);
+    // 4. Generar PDF combinando XML + datos + config del proyecto
+    const pdfBuffer = await generarPDFdesdeXMLyDatos(
+      xml,
+      datosReporte,
+      codigoProyecto // 👈 aquí pasamos el código (b43, b32, etc.)
+    );
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", "inline; filename=reporte.pdf");
